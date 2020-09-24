@@ -62,10 +62,10 @@ detector = dlib.get_frontal_face_detector()
 #load model
 #model = model_from_json(open("model.json", "r").read())
 
-with open('model.json', 'r') as json_file:
-    json_savedModel= json_file.read()
-#load the model architecture 
-model = tf.keras.models.model_from_json(json_savedModel)
+import tensorflow_hub as hub
+with open('model.json', 'r') as f: 
+  json = f.read() 
+model = model_from_json(json, custom_objects={'KerasLayer': hub.KerasLayer})
 
 
 #load weights
