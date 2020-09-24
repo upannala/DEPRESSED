@@ -17,8 +17,8 @@ from imutils import face_utils
 from imutils.video import FPS
 from imutils.face_utils import FaceAligner
 from imutils.face_utils import rect_to_bb
-from keras.models import model_from_json
-from keras.preprocessing import image
+from tensorflow.keras.models import model_from_json
+from tensorflow.keras.preprocessing import image
 from scipy.spatial import distance as dist
 from moviepy.editor import VideoFileClip
 from moviepy.editor import *
