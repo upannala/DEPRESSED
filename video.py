@@ -60,13 +60,7 @@ def eye_aspect_ratio(eye):
 
 detector = dlib.get_frontal_face_detector()
 #load model
-#model = model_from_json(open("model.json", "r").read())
-
-import tensorflow_hub as hub
-with open('model.json', 'r') as f: 
-  json = f.read() 
-model = model_from_json(json, custom_objects={'KerasLayer': hub.KerasLayer})
-
+model = model_from_json(open("model.json", "r").read())
 
 #load weights
 model.load_weights('model.h5')
