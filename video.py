@@ -11,6 +11,7 @@ import time
 import imutils
 import shlex
 import subprocess
+import tensorflow as tf
 from imutils.video import FileVideoStream
 from imutils.video import VideoStream
 from imutils import face_utils
@@ -59,7 +60,14 @@ def eye_aspect_ratio(eye):
 
 detector = dlib.get_frontal_face_detector()
 #load model
-model = model_from_json(open("model.json", "r").read())
+#model = model_from_json(open("model.json", "r").read())
+
+with open('model.json', 'r') as json_file:
+    json_savedModel= json_file.read()
+#load the model architecture 
+model = tf.keras.models.model_from_json(json_savedModel)
+
+
 #load weights
 model.load_weights('model.h5')
 
