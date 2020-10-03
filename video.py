@@ -26,6 +26,7 @@ from moviepy.editor import *
 import skvideo.io
 from firebase import firebase
 import json
+from AttentionWithContext import create_custom_objects
 
 # Variables used to calculate depression rate
 depressed=0
