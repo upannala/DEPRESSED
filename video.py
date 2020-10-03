@@ -42,24 +42,6 @@ blink_rate=0
 blink_depression=0
 
 
-def create_custom_objects():
-    instance_holder = {"instance": None}
-
-    class ClassWrapper(AttentionWithContext):
-        def __init__(self, *args, **kwargs):
-            instance_holder["instance"] = self
-            super(ClassWrapper, self).__init__(*args, **kwargs)
-
-    def loss(*args):
-        method = getattr(instance_holder["instance"], "loss_function")
-        return method(*args)
-
-    def accuracy(*args):
-        method = getattr(instance_holder["instance"], "accuracy")
-        return method(*args)
-    return {"ClassWrapper": ClassWrapper ,"AttentionWithContext": ClassWrapper, "loss": loss,
-            "accuracy":accuracy}
-
 #Method that return the EAR
 def eye_aspect_ratio(eye):
     # compute the euclidean distances between the two sets of
@@ -85,7 +67,7 @@ detector = dlib.get_frontal_face_detector()
 json_file = open('model.json', 'r')
 loaded_model_json = json_file.read()
 json_file.close()
-model = model_from_json(loaded_model_json, custom_objects=create_custom_objects())
+model = model_from_json(loaded_model_json)
 
 #load weights
 model.load_weights('model.h5')
