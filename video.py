@@ -60,7 +60,10 @@ def eye_aspect_ratio(eye):
 
 detector = dlib.get_frontal_face_detector()
 #load model
-model = model_from_json(open("model.json", "r").read())
+#model = model_from_json(open("model.json", "r").read())
+
+model_json = model.to_json()
+open('model.json', 'w').write(model_json)
 
 #load weights
 model.load_weights('model.h5')
