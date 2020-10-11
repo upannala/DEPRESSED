@@ -139,7 +139,7 @@ while True:
 
 
     for (x,y,w,h) in faces_detected:
-        cv2.rectangle(test_img,(x,y),(x+w,y+h),(255,0,0),thickness=7)
+        ##cv2.rectangle(test_img,(x,y),(x+w,y+h),(255,0,0),thickness=7)
         roi_gray=gray_img[y:y+w,x:x+h]#cropping region of interest i.e. face area from  image
         roi_gray=cv2.resize(roi_gray,(48,48))
         img_pixels = image.img_to_array(roi_gray)
