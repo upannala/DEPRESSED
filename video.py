@@ -190,8 +190,8 @@ while True:
         # visualize each of the eyes
         leftEyeHull = cv2.convexHull(leftEye)
         rightEyeHull = cv2.convexHull(rightEye)
-        cv2.drawContours(test_img, [leftEyeHull], -1, (0, 255, 0), 1)
-        cv2.drawContours(test_img, [rightEyeHull], -1, (0, 255, 0), 1)
+        ##cv2.drawContours(test_img, [leftEyeHull], -1, (0, 255, 0), 1)
+        ##cv2.drawContours(test_img, [rightEyeHull], -1, (0, 255, 0), 1)
 
         # check to see if the eye aspect ratio is below the blink
         # threshold, and if so, increment the blink frame counter
@@ -212,12 +212,12 @@ while True:
         
         # draw the total number of blinks on the frame along with
         # the computed eye aspect ratio for the frame
-        cv2.putText(test_img, "Blinks: {}".format(TOTAL), (10, 30),#
-            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)#
-        cv2.putText(test_img, "EAR: {:.2f}".format(ear), (300, 30),#
-            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)#
+        ###cv2.putText(test_img, "Blinks: {}".format(TOTAL), (10, 30),#
+        ###    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)#
+        ###cv2.putText(test_img, "EAR: {:.2f}".format(ear), (300, 30),#
+        ####    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)#
     resized_img = cv2.resize(test_img, (1000, 700))
-    cv2.imshow('Facial emotion analysis ',resized_img)#
+    ###cv2.imshow('Facial emotion analysis ',resized_img)#
 
 
     fps.update()
