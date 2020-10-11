@@ -67,7 +67,7 @@ model = model_from_json(open("model.json", "r").read())
 #json_file = open('model.json', 'r')
 #loaded_model_json = json_file.read()
 #json_file.close()
-model = model_from_json(loaded_model_json)
+#model = model_from_json(loaded_model_json)
 
 #load weights
 model.load_weights('model.h5')
