@@ -64,13 +64,13 @@ detector = dlib.get_frontal_face_detector()
 #load model
 #model = model_from_json(open("model.json", "r").read())
 
-json_file = open('fer.json', 'r')
+json_file = open('model.json', 'r')
 loaded_model_json = json_file.read()
 json_file.close()
 model = model_from_json(loaded_model_json)
 
 #load weights
-model.load_weights('fer.h5')
+model.load_weights('model.h5')
 
 face_haar_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
