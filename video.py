@@ -105,6 +105,8 @@ for obj in bucket.objects.all():
     body = obj.get()['Body'].read()
     s3.Bucket(BUCKET_NAME).download_file(key, key)
     time.sleep(60)
+    print("Video =",key)
+
     cap=FileVideoStream(key).start()
     fps = FPS().start()
     fileStream = True
@@ -112,6 +114,7 @@ for obj in bucket.objects.all():
 
     clip = VideoFileClip(key)
     clip_duration=(clip.duration)
+    print("Video Duration =",clip_duration)
 
 
     while True: 
@@ -174,7 +177,7 @@ for obj in bucket.objects.all():
             depression_rate=(100*depressed)/counter_frames
             #print("Not depressed==",not_depressed)
             #print("Depressed==",depressed)
-            print("Rate==",depression_rate)
+            ##print("Rate==",depression_rate)
     
             
         for rect in rects:
