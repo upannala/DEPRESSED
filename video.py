@@ -28,6 +28,7 @@ from moviepy.editor import *
 import skvideo.io
 from firebase import firebase
 import json
+import boto3
 
 
 # Variables used to calculate depression rate
