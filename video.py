@@ -124,7 +124,7 @@ for obj in bucket.objects.all():
         
         #print("image==",test_img)
         if before_rotate is None:
-            print("Image is null ",test_img)
+            ##print("Image is null ",test_img)
             break
         #if not ret:
         #   continue
