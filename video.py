@@ -44,6 +44,8 @@ TOTAL = 0
 blink_rate=0
 blink_depression=0
 
+BUCKET_NAME = 'videosdhi'
+
 
 #Method that return the EAR
 def eye_aspect_ratio(eye):
@@ -66,6 +68,10 @@ def eye_aspect_ratio(eye):
 detector = dlib.get_frontal_face_detector()
 #load model
 model = model_from_json(open("model.json", "r").read())
+#load weights
+model.load_weights('model.h5')
+
+
 firebase = firebase.FirebaseApplication('https://dirghayu-f1a14.firebaseio.com/', None)  
 config = {
   "apiKey": "AIzaSyD8k5I7iZcS-Pj9IsKNIUAZCuoXVMxFrO0",
@@ -82,13 +88,6 @@ all_users = db.child("Face").get()
 for user in all_users.each():
     db.child("Face").child(user.key()).remove()
 print("[INFO] Deleted existing data")    
-#json_file = open('model.json', 'r')
-#loaded_model_json = json_file.read()
-#json_file.close()
-#model = model_from_json(loaded_model_json)
-
-#load weights
-model.load_weights('model.h5')
 
 face_haar_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
@@ -96,8 +95,6 @@ face_haar_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_f
 ap = argparse.ArgumentParser()
 ap.add_argument("-p", "--shape-predictor", required=True,
     help="path to facial landmark predictor")
-#ap.add_argument("-v", "--video", type=str, default="",
- #   help="path to input video file")
 args = vars(ap.parse_args())
 
 # initialize dlib's face detector (HOG-based) and then create
@@ -111,9 +108,8 @@ predictor = dlib.shape_predictor(args["shape_predictor"])
 (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
 (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
 
-#cap=cv2.VideoCapture(0)
-# Taking the video
-BUCKET_NAME = 'videosdhi'
+
+# Taking the video from S3 bucket
 s3 = boto3.resource('s3')
 bucket = s3.Bucket(BUCKET_NAME)
 for obj in bucket.objects.all():
@@ -139,36 +135,23 @@ for obj in bucket.objects.all():
             break
         before_rotate=cap.read()# captures frame and returns boolean value and captured image
         
-        #print("image==",test_img)
         if before_rotate is None:
-            ##print("Image is null ",test_img)
             break
-        #if not ret:
-        #   continue
-        #test_img = imutils.rotate_bound(before_rotate, -90)
+        
         
         scale_percent = 50 # percent of original size
-        #print('Original Dimensions : ',test_img.shape)
-        #width = int(test_img.shape[1] * scale_percent / 100)
-        #height = int(test_img.shape[0] * scale_percent / 100)
-        #dim = (width, height)
-        #test_img = cv2.resize(test_img, dim, interpolation = cv2.INTER_AREA)
+
         test_img = imutils.resize(before_rotate, width=450)
-        #print('Resized Dimensions : ',test_img.shape)
+        
         gray_img= cv2.cvtColor(test_img, cv2.COLOR_BGR2GRAY)
 
         faces_detected = face_haar_cascade.detectMultiScale(gray_img, 1.32, 5)
         
         rects = detector(gray_img, 0)
-        #f not ret:
-        #  continue
-        #if ret:
-        #    assert not isinstance(test_img,type(None)), 'frame not found'
         
 
-
         for (x,y,w,h) in faces_detected:
-            ##cv2.rectangle(test_img,(x,y),(x+w,y+h),(255,0,0),thickness=7)
+            
             roi_gray=gray_img[y:y+w,x:x+h]#cropping region of interest i.e. face area from  image
             roi_gray=cv2.resize(roi_gray,(48,48))
             img_pixels = image.img_to_array(roi_gray)
@@ -190,11 +173,9 @@ for obj in bucket.objects.all():
                 not_depressed = not_depressed + 1
             
             counter_frames=counter_frames+1
-            #print("counter frames==",counter_frames)
+            
             depression_rate=(100*depressed)/counter_frames
-            #print("Not depressed==",not_depressed)
-            #print("Depressed==",depressed)
-            ##print("Rate==",depression_rate)
+            
     
             
         for rect in rects:
@@ -260,24 +241,23 @@ for obj in bucket.objects.all():
     elif blink_rate>32:
         blink_depression=((blink_rate-32)/32)*100
     print("Blink Rate==",blink_rate)
-    #print("Height==",height)
-    #print("Width==",width)
     print("Rate==",depression_rate)
     print("Blink depression Rate==",blink_depression)
-    fps.stop()
     print("[INFO] elasped time:",clip_duration)
-    ##cap.release()#
+    
+    fps.stop()
     cv2.destroyAllWindows
         
     data =  { 'Name': key_id,  
-            'Emotion': depression_rate,  
-            'Blink': blink_depression  
+              'Emotion': depression_rate,  
+              'Blink': blink_depression  
             }  
-    #data =  json.dumps({'Rate': depression_rate, 'Blink depression Rate': blink_depression})
-    ##result = firebase.post('dirghayu-f1a14/Face/',data)  
+    
     result=db.child("Face").push(data)
     print(result)
     print("==========================================================") 
+    
+    #Resetting values for the next run
     COUNTER = 0
     TOTAL = 0
     blink_rate=0
