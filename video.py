@@ -46,6 +46,13 @@ blink_depression=0
 
 BUCKET_NAME = 'videosdhi'
 
+config = {
+  "apiKey": "AIzaSyD8k5I7iZcS-Pj9IsKNIUAZCuoXVMxFrO0",
+  "authDomain": "dirghayu-f1a14.firebaseapp.com",
+  "databaseURL": "https://dirghayu-f1a14.firebaseio.com",
+  "storageBucket": "dirghayu-f1a14.appspot.com"
+}
+
 
 #Method that return the EAR
 def eye_aspect_ratio(eye):
@@ -71,24 +78,18 @@ model = model_from_json(open("model.json", "r").read())
 #load weights
 model.load_weights('model.h5')
 
-
-firebase = firebase.FirebaseApplication('https://dirghayu-f1a14.firebaseio.com/', None)  
-config = {
-  "apiKey": "AIzaSyD8k5I7iZcS-Pj9IsKNIUAZCuoXVMxFrO0",
-  "authDomain": "dirghayu-f1a14.firebaseapp.com",
-  "databaseURL": "https://dirghayu-f1a14.firebaseio.com",
-  "storageBucket": "dirghayu-f1a14.appspot.com"
-}
-
-
+#Initializing the database
 firebasepy = pyrebase.initialize_app(config)
 db = firebasepy.database()
 
+#Delete all the data in the Face section
 all_users = db.child("Face").get()
 for user in all_users.each():
     db.child("Face").child(user.key()).remove()
+
 print("[INFO] Deleted existing data")    
 
+#importing the haarcascade_frontalface_default.xml library
 face_haar_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 #Runtime arguements
