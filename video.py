@@ -106,6 +106,7 @@ for obj in bucket.objects.all():
     s3.Bucket(BUCKET_NAME).download_file(key, key)
     time.sleep(60)
     print("Video =",key)
+    key_id=key.replace(".mp4", "")
 
     cap=FileVideoStream(key).start()
     fps = FPS().start()
@@ -253,9 +254,9 @@ for obj in bucket.objects.all():
     cv2.destroyAllWindows
 
     firebase = firebase.FirebaseApplication('https://dirghayu-f1a14.firebaseio.com/', None)  
-    data =  { 'Name': 'Udith',  
-            'RollNo': depression_rate,  
-            'Percentage': blink_depression  
+    data =  { 'Name': key_id,  
+            'Emotion': depression_rate,  
+            'Blink': blink_depression  
             }  
     #data =  json.dumps({'Rate': depression_rate, 'Blink depression Rate': blink_depression})
     result = firebase.post('dirghayu-f1a14/Face/',data)  
