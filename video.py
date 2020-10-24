@@ -70,8 +70,8 @@ firebase = firebase.FirebaseApplication('https://dirghayu-f1a14.firebaseio.com/'
 config = {
   "apiKey": "AIzaSyD8k5I7iZcS-Pj9IsKNIUAZCuoXVMxFrO0",
   "authDomain": "dirghayu-f1a14.firebaseapp.com",
-  "databaseURL": "https://dirghayu-f1a14.firebaseio.com"
-  "storageBucket": "dirghayu-f1a14.appspot.com",
+  "databaseURL": "https://dirghayu-f1a14.firebaseio.com",
+  "storageBucket": "dirghayu-f1a14.appspot.com"
 }
 
 
