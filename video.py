@@ -77,6 +77,11 @@ config = {
 
 firebasepy = pyrebase.initialize_app(config)
 db = firebasepy.database()
+
+all_users = db.child("Face").get()
+for user in all_users.each():
+    db.child("Face").child(user.key()).remove()
+print("[INFO] Deleted existing data")    
 #json_file = open('model.json', 'r')
 #loaded_model_json = json_file.read()
 #json_file.close()
