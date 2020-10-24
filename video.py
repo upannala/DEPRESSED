@@ -25,6 +25,7 @@ from scipy.spatial import distance as dist
 from moviepy.editor import VideoFileClip
 from moviepy.editor import *
 import skvideo.io
+import pyrebase
 from firebase import firebase
 import json
 import boto3
@@ -66,7 +67,13 @@ detector = dlib.get_frontal_face_detector()
 #load model
 model = model_from_json(open("model.json", "r").read())
 firebase = firebase.FirebaseApplication('https://dirghayu-f1a14.firebaseio.com/', None)  
+config = {
+  "databaseURL": "https://databaseName.firebaseio.com",
+}
 
+
+firebasepy = pyrebase.initialize_app(config)
+db = firebase.database()
 #json_file = open('model.json', 'r')
 #loaded_model_json = json_file.read()
 #json_file.close()
@@ -262,7 +269,8 @@ for obj in bucket.objects.all():
             'Blink': blink_depression  
             }  
     #data =  json.dumps({'Rate': depression_rate, 'Blink depression Rate': blink_depression})
-    result = firebase.post('dirghayu-f1a14/Face/',data)  
+    ##result = firebase.post('dirghayu-f1a14/Face/',data)  
+    result=db.child("Face").push(data)
     print(result)
     print("==========================================================") 
     COUNTER = 0
