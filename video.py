@@ -104,13 +104,13 @@ for obj in bucket.objects.all():
     key = obj.key
     body = obj.get()['Body'].read()
     s3.Bucket(BUCKET_NAME).download_file(key, key)
-
+    time.sleep(60)
     cap=FileVideoStream(key).start()
     fps = FPS().start()
     fileStream = True
     time.sleep(1.0)
 
-    clip = VideoFileClip(args["video"])
+    clip = VideoFileClip(key)
     clip_duration=(clip.duration)
 
 
