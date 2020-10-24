@@ -69,7 +69,9 @@ model = model_from_json(open("model.json", "r").read())
 firebase = firebase.FirebaseApplication('https://dirghayu-f1a14.firebaseio.com/', None)  
 config = {
   "apiKey": "AIzaSyD8k5I7iZcS-Pj9IsKNIUAZCuoXVMxFrO0",
+  "authDomain": "dirghayu-f1a14.firebaseapp.com",
   "databaseURL": "https://dirghayu-f1a14.firebaseio.com"
+  "storageBucket": "dirghayu-f1a14.appspot.com",
 }
 
 
