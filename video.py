@@ -260,4 +260,8 @@ for obj in bucket.objects.all():
     #data =  json.dumps({'Rate': depression_rate, 'Blink depression Rate': blink_depression})
     result = firebase.post('dirghayu-f1a14/Face/',data)  
     print(result)
-    print("==========================================================")  
+    print("==========================================================") 
+    COUNTER = 0
+    TOTAL = 0
+    blink_rate=0
+    blink_depression=0 
