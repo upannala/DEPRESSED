@@ -1,5 +1,5 @@
 # USAGE
-# python detect_blinks.py --shape-predictor shape_predictor_68_face_landmarks.dat --video blink_detection_demo.mp4
+# python video.py --shape-predictor shape_predictor_68_face_landmarks.dat --video blink_detection_demo.mp4
 
 # Importing relevant packages and libraries
 import os
@@ -80,8 +80,8 @@ face_haar_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_f
 ap = argparse.ArgumentParser()
 ap.add_argument("-p", "--shape-predictor", required=True,
     help="path to facial landmark predictor")
-ap.add_argument("-v", "--video", type=str, default="",
-    help="path to input video file")
+#ap.add_argument("-v", "--video", type=str, default="",
+ #   help="path to input video file")
 args = vars(ap.parse_args())
 
 # initialize dlib's face detector (HOG-based) and then create
