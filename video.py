@@ -68,7 +68,7 @@ detector = dlib.get_frontal_face_detector()
 model = model_from_json(open("model.json", "r").read())
 firebase = firebase.FirebaseApplication('https://dirghayu-f1a14.firebaseio.com/', None)  
 config = {
-  "databaseURL": "https://databaseName.firebaseio.com",
+  "databaseURL": "https://dirghayu-f1a14.firebaseio.com",
 }
 
 
