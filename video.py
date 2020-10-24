@@ -4,7 +4,6 @@
 # Importing relevant packages and libraries
 import os
 import sys
-sys.path.append(os.environ['WORKSPACE'])
 import cv2
 import dlib
 import numpy as np
