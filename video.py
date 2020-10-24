@@ -260,10 +260,7 @@ for obj in bucket.objects.all():
     print("[INFO] elasped time:",clip_duration)
     ##cap.release()#
     cv2.destroyAllWindows
-    deletion=firebase.delete('dirghayu-f1a14/Face/')  
-    print(deletion)
-
-    
+        
     data =  { 'Name': key_id,  
             'Emotion': depression_rate,  
             'Blink': blink_depression  
