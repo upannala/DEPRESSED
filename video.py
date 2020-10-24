@@ -1,5 +1,5 @@
 # USAGE
-# python video.py --shape-predictor shape_predictor_68_face_landmarks.dat --video blink_detection_demo.mp4
+# python video.py --shape-predictor shape_predictor_68_face_landmarks.dat
 
 # Importing relevant packages and libraries
 import os
