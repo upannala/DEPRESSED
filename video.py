@@ -3,6 +3,8 @@
 
 # Importing relevant packages and libraries
 import os
+import sys
+sys.path.append(os.environ['WORKSPACE'])
 import cv2
 import dlib
 import numpy as np
@@ -95,156 +97,163 @@ predictor = dlib.shape_predictor(args["shape_predictor"])
 
 #cap=cv2.VideoCapture(0)
 # Taking the video
+BUCKET_NAME = 'videosdhi'
+s3 = boto3.resource('s3')
+bucket = s3.Bucket(BUCKET_NAME)
+for obj in bucket.objects.all():
+    key = obj.key
+    body = obj.get()['Body'].read()
+    s3.Bucket(BUCKET_NAME).download_file(key, key)
 
-cap=FileVideoStream(args["video"]).start()
-fps = FPS().start()
-fileStream = True
-time.sleep(1.0)
+    cap=FileVideoStream(key).start()
+    fps = FPS().start()
+    fileStream = True
+    time.sleep(1.0)
 
-clip = VideoFileClip(args["video"])
-clip_duration=(clip.duration)
-
-
-while True: 
-    if fileStream and not cap.more():
-        break
-    before_rotate=cap.read()# captures frame and returns boolean value and captured image
-    
-    #print("image==",test_img)
-    if before_rotate is None:
-        print("Image is null ",test_img)
-        break
-    #if not ret:
-     #   continue
-    #test_img = imutils.rotate_bound(before_rotate, -90)
-    
-    scale_percent = 50 # percent of original size
-    #print('Original Dimensions : ',test_img.shape)
-    #width = int(test_img.shape[1] * scale_percent / 100)
-    #height = int(test_img.shape[0] * scale_percent / 100)
-    #dim = (width, height)
-    #test_img = cv2.resize(test_img, dim, interpolation = cv2.INTER_AREA)
-    test_img = imutils.resize(before_rotate, width=450)
-    #print('Resized Dimensions : ',test_img.shape)
-    gray_img= cv2.cvtColor(test_img, cv2.COLOR_BGR2GRAY)
-
-    faces_detected = face_haar_cascade.detectMultiScale(gray_img, 1.32, 5)
-    
-    rects = detector(gray_img, 0)
-    #f not ret:
-    #  continue
-    #if ret:
-    #    assert not isinstance(test_img,type(None)), 'frame not found'
-    
+    clip = VideoFileClip(args["video"])
+    clip_duration=(clip.duration)
 
 
-    for (x,y,w,h) in faces_detected:
-        ##cv2.rectangle(test_img,(x,y),(x+w,y+h),(255,0,0),thickness=7)
-        roi_gray=gray_img[y:y+w,x:x+h]#cropping region of interest i.e. face area from  image
-        roi_gray=cv2.resize(roi_gray,(48,48))
-        img_pixels = image.img_to_array(roi_gray)
-        img_pixels = np.expand_dims(img_pixels, axis = 0)
-        img_pixels /= 255
-
-        predictions = model.predict(img_pixels)
-
-        #find max indexed array
-        max_index = np.argmax(predictions[0])
-
-        emotions = ('angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral')
-        predicted_emotion = emotions[max_index]
-
-        #cv2.putText(test_img, predicted_emotion, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
-        if predicted_emotion in('angry' ,'disgust' ,'fear' ,'sad'):
-            depressed = depressed +1
-        else:
-            not_depressed = not_depressed + 1
+    while True: 
+        if fileStream and not cap.more():
+            break
+        before_rotate=cap.read()# captures frame and returns boolean value and captured image
         
-        counter_frames=counter_frames+1
-        #print("counter frames==",counter_frames)
-        depression_rate=(100*depressed)/counter_frames
-        #print("Not depressed==",not_depressed)
-        #print("Depressed==",depressed)
-        print("Rate==",depression_rate)
-   
+        #print("image==",test_img)
+        if before_rotate is None:
+            print("Image is null ",test_img)
+            break
+        #if not ret:
+        #   continue
+        #test_img = imutils.rotate_bound(before_rotate, -90)
         
-    for rect in rects:
+        scale_percent = 50 # percent of original size
+        #print('Original Dimensions : ',test_img.shape)
+        #width = int(test_img.shape[1] * scale_percent / 100)
+        #height = int(test_img.shape[0] * scale_percent / 100)
+        #dim = (width, height)
+        #test_img = cv2.resize(test_img, dim, interpolation = cv2.INTER_AREA)
+        test_img = imutils.resize(before_rotate, width=450)
+        #print('Resized Dimensions : ',test_img.shape)
+        gray_img= cv2.cvtColor(test_img, cv2.COLOR_BGR2GRAY)
+
+        faces_detected = face_haar_cascade.detectMultiScale(gray_img, 1.32, 5)
         
-        # determine the facial landmarks for the face region, then
-        # convert the facial landmark (x, y)-coordinates to a NumPy
-        # array
-        shape = predictor(gray_img, rect)
-        shape = face_utils.shape_to_np(shape)
-
-        # extract the left and right eye coordinates, then use the
-        # coordinates to compute the eye aspect ratio for both eyes
-        leftEye = shape[lStart:lEnd]
-        rightEye = shape[rStart:rEnd]
-        leftEAR = eye_aspect_ratio(leftEye)
-        rightEAR = eye_aspect_ratio(rightEye)
-
-        # average the eye aspect ratio together for both eyes
-        ear = (leftEAR + rightEAR) / 2.0
-
-        # compute the convex hull for the left and right eye, then
-        # visualize each of the eyes
-        leftEyeHull = cv2.convexHull(leftEye)
-        rightEyeHull = cv2.convexHull(rightEye)
-        ##cv2.drawContours(test_img, [leftEyeHull], -1, (0, 255, 0), 1)
-        ##cv2.drawContours(test_img, [rightEyeHull], -1, (0, 255, 0), 1)
-
-        # check to see if the eye aspect ratio is below the blink
-        # threshold, and if so, increment the blink frame counter
-        if ear < EYE_AR_THRESH:
-            COUNTER += 1
-
-        # otherwise, the eye aspect ratio is not below the blink
-        # threshold
-        else:
-            # if the eyes were closed for a sufficient number of
-            # then increment the total number of blinks
-            if COUNTER >= EYE_AR_CONSEC_FRAMES:
-                TOTAL += 1
-
-            # reset the eye frame counter
-            COUNTER = 0
-        ##print("Blink Count==",TOTAL)
+        rects = detector(gray_img, 0)
+        #f not ret:
+        #  continue
+        #if ret:
+        #    assert not isinstance(test_img,type(None)), 'frame not found'
         
-        # draw the total number of blinks on the frame along with
-        # the computed eye aspect ratio for the frame
-        ###cv2.putText(test_img, "Blinks: {}".format(TOTAL), (10, 30),#
-        ###    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)#
-        ###cv2.putText(test_img, "EAR: {:.2f}".format(ear), (300, 30),#
-        ####    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)#
-    resized_img = cv2.resize(test_img, (1000, 700))
-    ###cv2.imshow('Facial emotion analysis ',resized_img)#
 
 
-    fps.update()
-    if cv2.waitKey(10) == ord('q'):
-        break
+        for (x,y,w,h) in faces_detected:
+            ##cv2.rectangle(test_img,(x,y),(x+w,y+h),(255,0,0),thickness=7)
+            roi_gray=gray_img[y:y+w,x:x+h]#cropping region of interest i.e. face area from  image
+            roi_gray=cv2.resize(roi_gray,(48,48))
+            img_pixels = image.img_to_array(roi_gray)
+            img_pixels = np.expand_dims(img_pixels, axis = 0)
+            img_pixels /= 255
+
+            predictions = model.predict(img_pixels)
+
+            #find max indexed array
+            max_index = np.argmax(predictions[0])
+
+            emotions = ('angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral')
+            predicted_emotion = emotions[max_index]
+
+            #cv2.putText(test_img, predicted_emotion, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+            if predicted_emotion in('angry' ,'disgust' ,'fear' ,'sad'):
+                depressed = depressed +1
+            else:
+                not_depressed = not_depressed + 1
+            
+            counter_frames=counter_frames+1
+            #print("counter frames==",counter_frames)
+            depression_rate=(100*depressed)/counter_frames
+            #print("Not depressed==",not_depressed)
+            #print("Depressed==",depressed)
+            print("Rate==",depression_rate)
+    
+            
+        for rect in rects:
+            
+            # determine the facial landmarks for the face region, then
+            # convert the facial landmark (x, y)-coordinates to a NumPy
+            # array
+            shape = predictor(gray_img, rect)
+            shape = face_utils.shape_to_np(shape)
+
+            # extract the left and right eye coordinates, then use the
+            # coordinates to compute the eye aspect ratio for both eyes
+            leftEye = shape[lStart:lEnd]
+            rightEye = shape[rStart:rEnd]
+            leftEAR = eye_aspect_ratio(leftEye)
+            rightEAR = eye_aspect_ratio(rightEye)
+
+            # average the eye aspect ratio together for both eyes
+            ear = (leftEAR + rightEAR) / 2.0
+
+            # compute the convex hull for the left and right eye, then
+            # visualize each of the eyes
+            leftEyeHull = cv2.convexHull(leftEye)
+            rightEyeHull = cv2.convexHull(rightEye)
+            ##cv2.drawContours(test_img, [leftEyeHull], -1, (0, 255, 0), 1)
+            ##cv2.drawContours(test_img, [rightEyeHull], -1, (0, 255, 0), 1)
+
+            # check to see if the eye aspect ratio is below the blink
+            # threshold, and if so, increment the blink frame counter
+            if ear < EYE_AR_THRESH:
+                COUNTER += 1
+
+            # otherwise, the eye aspect ratio is not below the blink
+            # threshold
+            else:
+                # if the eyes were closed for a sufficient number of
+                # then increment the total number of blinks
+                if COUNTER >= EYE_AR_CONSEC_FRAMES:
+                    TOTAL += 1
+
+                # reset the eye frame counter
+                COUNTER = 0
+            ##print("Blink Count==",TOTAL)
+            
+            # draw the total number of blinks on the frame along with
+            # the computed eye aspect ratio for the frame
+            ###cv2.putText(test_img, "Blinks: {}".format(TOTAL), (10, 30),#
+            ###    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)#
+            ###cv2.putText(test_img, "EAR: {:.2f}".format(ear), (300, 30),#
+            ####    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)#
+        resized_img = cv2.resize(test_img, (1000, 700))
+        ###cv2.imshow('Facial emotion analysis ',resized_img)#
 
 
-blink_rate=(TOTAL/clip_duration)*60
-if blink_rate<10.5:
-    blink_depression=((10.5-blink_rate)/10.5)*100
-elif blink_rate>32:
-    blink_depression=((blink_rate-32)/32)*100
-print("Blink Rate==",blink_rate)
-#print("Height==",height)
-#print("Width==",width)
-print("Rate==",depression_rate)
-print("Blink depression Rate==",blink_depression)
-fps.stop()
-print("[INFO] elasped time:",clip_duration)
-##cap.release()#
-cv2.destroyAllWindows
+        fps.update()
+        if cv2.waitKey(10) == ord('q'):
+            break
 
-firebase = firebase.FirebaseApplication('https://dirghayu-f1a14.firebaseio.com/', None)  
-data =  { 'Name': 'Udith',  
-          'RollNo': depression_rate,  
-          'Percentage': blink_depression  
-          }  
-#data =  json.dumps({'Rate': depression_rate, 'Blink depression Rate': blink_depression})
-result = firebase.post('dirghayu-f1a14/Face/',data)  
-print(result)  
+
+    blink_rate=(TOTAL/clip_duration)*60
+    if blink_rate<10.5:
+        blink_depression=((10.5-blink_rate)/10.5)*100
+    elif blink_rate>32:
+        blink_depression=((blink_rate-32)/32)*100
+    print("Blink Rate==",blink_rate)
+    #print("Height==",height)
+    #print("Width==",width)
+    print("Rate==",depression_rate)
+    print("Blink depression Rate==",blink_depression)
+    fps.stop()
+    print("[INFO] elasped time:",clip_duration)
+    ##cap.release()#
+    cv2.destroyAllWindows
+
+    firebase = firebase.FirebaseApplication('https://dirghayu-f1a14.firebaseio.com/', None)  
+    data =  { 'Name': 'Udith',  
+            'RollNo': depression_rate,  
+            'Percentage': blink_depression  
+            }  
+    #data =  json.dumps({'Rate': depression_rate, 'Blink depression Rate': blink_depression})
+    result = firebase.post('dirghayu-f1a14/Face/',data)  
+    print(result)  
