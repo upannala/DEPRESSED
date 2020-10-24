@@ -236,7 +236,7 @@ for obj in bucket.objects.all():
         if cv2.waitKey(10) == ord('q'):
             break
 
-
+    print("No of blinks =",TOTAL)        
     blink_rate=(TOTAL/clip_duration)*60
     if blink_rate<10.5:
         blink_depression=((10.5-blink_rate)/10.5)*100
@@ -259,4 +259,5 @@ for obj in bucket.objects.all():
             }  
     #data =  json.dumps({'Rate': depression_rate, 'Blink depression Rate': blink_depression})
     result = firebase.post('dirghayu-f1a14/Face/',data)  
-    print(result)  
+    print(result)
+    print("==========================================================")  
