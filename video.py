@@ -65,6 +65,7 @@ def eye_aspect_ratio(eye):
 detector = dlib.get_frontal_face_detector()
 #load model
 model = model_from_json(open("model.json", "r").read())
+firebase = firebase.FirebaseApplication('https://dirghayu-f1a14.firebaseio.com/', None)  
 
 #json_file = open('model.json', 'r')
 #loaded_model_json = json_file.read()
@@ -253,7 +254,7 @@ for obj in bucket.objects.all():
     ##cap.release()#
     cv2.destroyAllWindows
 
-    firebase = firebase.FirebaseApplication('https://dirghayu-f1a14.firebaseio.com/', None)  
+    
     data =  { 'Name': key_id,  
             'Emotion': depression_rate,  
             'Blink': blink_depression  
