@@ -296,6 +296,4 @@ for obj in bucket.objects.all():
             s3.Object(BUCKET_NAME, key).delete()
         
         else :
-            print("[INFO] Video does not contain a valid user ID")
-            print("==========================================================")
             s3.Object(BUCKET_NAME, key).delete()
