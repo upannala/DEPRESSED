@@ -254,7 +254,7 @@ for obj in bucket.objects.all():
               'Blink': blink_depression  
             }  
     
-    result=db.child("Face").push(data)
+    result=db.child("Mouth").push(data)
     print(result)
     print("==========================================================") 
     
