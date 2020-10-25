@@ -299,4 +299,5 @@ for obj in bucket.objects.all():
             s3.Object(BUCKET_NAME, key).delete()
         
         else :
+            print("==========================================================") 
             s3.Object(BUCKET_NAME, key).delete()
