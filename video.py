@@ -139,19 +139,21 @@ for obj in bucket.objects.all():
     time.sleep(60)
     print("Video =",key)
     key_id=key.replace(".mp4", "")
-
-    cap=FileVideoStream(key).start()
-    fps = FPS().start()
-    fileStream = True
-    time.sleep(1.0)
-
-    clip = VideoFileClip(key)
-    clip_duration=(clip.duration)
-    print("Video Duration =",clip_duration)
-
     results = col_ref.order_by('date',direction='DESCENDING').get() # another way - get the last document by date
     for item in results:
+        print(item.to_dict())
+        print(item.id)
         if item.id == key_id:
+            cap=FileVideoStream(key).start()
+            fps = FPS().start()
+            fileStream = True
+            time.sleep(1.0)
+
+            clip = VideoFileClip(key)
+            clip_duration=(clip.duration)
+            print("Video Duration =",clip_duration)
+
+            
             while True: 
                 if fileStream and not cap.more():
                     break
@@ -291,8 +293,3 @@ for obj in bucket.objects.all():
             blink_rate=0
             blink_depression=0 
             s3.Object(BUCKET_NAME, key).delete()
-        else :
-            fps.stop()
-            cv2.destroyAllWindows
-            print("[INFO] This video is does not have a valid patiend ID") 
-            print("==========================================================") 
