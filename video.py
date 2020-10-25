@@ -284,3 +284,4 @@ for obj in bucket.objects.all():
     TOTAL = 0
     blink_rate=0
     blink_depression=0 
+    s3.Object(BUCKET_NAME, key).delete()
