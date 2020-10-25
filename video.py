@@ -141,8 +141,6 @@ for obj in bucket.objects.all():
     key_id=key.replace(".mp4", "")
     results = col_ref.order_by('date',direction='DESCENDING').get() # another way - get the last document by date
     for item in results:
-        print(item.to_dict())
-        print(item.id)
         if item.id == key_id:
             cap=FileVideoStream(key).start()
             fps = FPS().start()
