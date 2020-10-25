@@ -136,7 +136,7 @@ for obj in bucket.objects.all():
     key = obj.key
     body = obj.get()['Body'].read()
     s3.Bucket(BUCKET_NAME).download_file(key, key)
-    time.sleep(60)
+    time.sleep(10)
     print("Video =",key)
     key_id=key.replace(".mp4", "")
     results = col_ref.order_by('date',direction='DESCENDING').get() # another way - get the last document by date
