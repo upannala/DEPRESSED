@@ -149,143 +149,150 @@ for obj in bucket.objects.all():
     clip_duration=(clip.duration)
     print("Video Duration =",clip_duration)
 
+    results = col_ref.order_by('date',direction='DESCENDING').get() # another way - get the last document by date
+    for item in results:
+        print(item.to_dict())
+        print(item.id)
+        if item.id == key_id:
+            while True: 
+                if fileStream and not cap.more():
+                    break
+                before_rotate=cap.read()# captures frame and returns boolean value and captured image
+                
+                if before_rotate is None:
+                    break
+                
+                
+                scale_percent = 50 # percent of original size
 
-    while True: 
-        if fileStream and not cap.more():
-            break
-        before_rotate=cap.read()# captures frame and returns boolean value and captured image
-        
-        if before_rotate is None:
-            break
-        
-        
-        scale_percent = 50 # percent of original size
+                test_img = imutils.resize(before_rotate, width=450)
+                
+                gray_img= cv2.cvtColor(test_img, cv2.COLOR_BGR2GRAY)
 
-        test_img = imutils.resize(before_rotate, width=450)
-        
-        gray_img= cv2.cvtColor(test_img, cv2.COLOR_BGR2GRAY)
+                faces_detected = face_haar_cascade.detectMultiScale(gray_img, 1.32, 5)
+                
+                rects = detector(gray_img, 0)
+                
 
-        faces_detected = face_haar_cascade.detectMultiScale(gray_img, 1.32, 5)
-        
-        rects = detector(gray_img, 0)
-        
+                for (x,y,w,h) in faces_detected:
+                    
+                    roi_gray=gray_img[y:y+w,x:x+h]#cropping region of interest i.e. face area from  image
+                    roi_gray=cv2.resize(roi_gray,(48,48))
+                    img_pixels = image.img_to_array(roi_gray)
+                    img_pixels = np.expand_dims(img_pixels, axis = 0)
+                    img_pixels /= 255
 
-        for (x,y,w,h) in faces_detected:
+                    predictions = model.predict(img_pixels)
+
+                    #find max indexed array
+                    max_index = np.argmax(predictions[0])
+
+                    emotions = ('angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral')
+                    predicted_emotion = emotions[max_index]
+
+                    #cv2.putText(test_img, predicted_emotion, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+                    if predicted_emotion in('angry' ,'disgust' ,'fear' ,'sad'):
+                        depressed = depressed +1
+                    else:
+                        not_depressed = not_depressed + 1
+                    
+                    counter_frames=counter_frames+1
+                    
+                    depression_rate=(100*depressed)/counter_frames
+                    
             
-            roi_gray=gray_img[y:y+w,x:x+h]#cropping region of interest i.e. face area from  image
-            roi_gray=cv2.resize(roi_gray,(48,48))
-            img_pixels = image.img_to_array(roi_gray)
-            img_pixels = np.expand_dims(img_pixels, axis = 0)
-            img_pixels /= 255
+                    
+                for rect in rects:
+                    
+                    # determine the facial landmarks for the face region, then
+                    # convert the facial landmark (x, y)-coordinates to a NumPy
+                    # array
+                    shape = predictor(gray_img, rect)
+                    shape = face_utils.shape_to_np(shape)
 
-            predictions = model.predict(img_pixels)
+                    # extract the left and right eye coordinates, then use the
+                    # coordinates to compute the eye aspect ratio for both eyes
+                    leftEye = shape[lStart:lEnd]
+                    rightEye = shape[rStart:rEnd]
+                    leftEAR = eye_aspect_ratio(leftEye)
+                    rightEAR = eye_aspect_ratio(rightEye)
 
-            #find max indexed array
-            max_index = np.argmax(predictions[0])
+                    # average the eye aspect ratio together for both eyes
+                    ear = (leftEAR + rightEAR) / 2.0
 
-            emotions = ('angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral')
-            predicted_emotion = emotions[max_index]
+                    # compute the convex hull for the left and right eye, then
+                    # visualize each of the eyes
+                    leftEyeHull = cv2.convexHull(leftEye)
+                    rightEyeHull = cv2.convexHull(rightEye)
+                    ##cv2.drawContours(test_img, [leftEyeHull], -1, (0, 255, 0), 1)
+                    ##cv2.drawContours(test_img, [rightEyeHull], -1, (0, 255, 0), 1)
 
-            #cv2.putText(test_img, predicted_emotion, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
-            if predicted_emotion in('angry' ,'disgust' ,'fear' ,'sad'):
-                depressed = depressed +1
-            else:
-                not_depressed = not_depressed + 1
+                    # check to see if the eye aspect ratio is below the blink
+                    # threshold, and if so, increment the blink frame counter
+                    if ear < EYE_AR_THRESH:
+                        COUNTER += 1
+
+                    # otherwise, the eye aspect ratio is not below the blink
+                    # threshold
+                    else:
+                        # if the eyes were closed for a sufficient number of
+                        # then increment the total number of blinks
+                        if COUNTER >= EYE_AR_CONSEC_FRAMES:
+                            TOTAL += 1
+
+                        # reset the eye frame counter
+                        COUNTER = 0
+                    ##print("Blink Count==",TOTAL)
+                    
+                    # draw the total number of blinks on the frame along with
+                    # the computed eye aspect ratio for the frame
+                    ###cv2.putText(test_img, "Blinks: {}".format(TOTAL), (10, 30),#
+                    ###    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)#
+                    ###cv2.putText(test_img, "EAR: {:.2f}".format(ear), (300, 30),#
+                    ####    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)#
+                resized_img = cv2.resize(test_img, (1000, 700))
+                ###cv2.imshow('Facial emotion analysis ',resized_img)#
+
+
+                fps.update()
+                if cv2.waitKey(10) == ord('q'):
+                    break
+
+            print("No of blinks =",TOTAL)        
+            blink_rate=(TOTAL/clip_duration)*60
+            if blink_rate<10.5:
+                blink_depression=((10.5-blink_rate)/10.5)*100
+            elif blink_rate>32:
+                blink_depression=((blink_rate-32)/32)*100
+            print("Blink Rate==",blink_rate)
+            print("Rate==",depression_rate)
+            print("Blink depression Rate==",blink_depression)
+            print("[INFO] elasped time:",clip_duration)
             
-            counter_frames=counter_frames+1
+            fps.stop()
+            cv2.destroyAllWindows
+                
+            #data =  { 'key': key_id,
+            #          'Name': key_id,  
+            #          'Emotion': depression_rate,  
+            #          'Blink': blink_depression  
+            #       }  
+            doc = col_ref.document(key_id) # doc is DocumentReference
+            field_updates = {"dynamic_blink": blink_depression,
+                            "dynamic_emotion": depression_rate,
+                            "dynamic_comp": "YES"}
+            result=doc.update(field_updates)
+            #result=db.child("Mouth").push(data)
+            #result=db.child("Mouth").set(data)
+            print(result)
+            print("==========================================================") 
             
-            depression_rate=(100*depressed)/counter_frames
-            
-    
-            
-        for rect in rects:
-            
-            # determine the facial landmarks for the face region, then
-            # convert the facial landmark (x, y)-coordinates to a NumPy
-            # array
-            shape = predictor(gray_img, rect)
-            shape = face_utils.shape_to_np(shape)
-
-            # extract the left and right eye coordinates, then use the
-            # coordinates to compute the eye aspect ratio for both eyes
-            leftEye = shape[lStart:lEnd]
-            rightEye = shape[rStart:rEnd]
-            leftEAR = eye_aspect_ratio(leftEye)
-            rightEAR = eye_aspect_ratio(rightEye)
-
-            # average the eye aspect ratio together for both eyes
-            ear = (leftEAR + rightEAR) / 2.0
-
-            # compute the convex hull for the left and right eye, then
-            # visualize each of the eyes
-            leftEyeHull = cv2.convexHull(leftEye)
-            rightEyeHull = cv2.convexHull(rightEye)
-            ##cv2.drawContours(test_img, [leftEyeHull], -1, (0, 255, 0), 1)
-            ##cv2.drawContours(test_img, [rightEyeHull], -1, (0, 255, 0), 1)
-
-            # check to see if the eye aspect ratio is below the blink
-            # threshold, and if so, increment the blink frame counter
-            if ear < EYE_AR_THRESH:
-                COUNTER += 1
-
-            # otherwise, the eye aspect ratio is not below the blink
-            # threshold
-            else:
-                # if the eyes were closed for a sufficient number of
-                # then increment the total number of blinks
-                if COUNTER >= EYE_AR_CONSEC_FRAMES:
-                    TOTAL += 1
-
-                # reset the eye frame counter
-                COUNTER = 0
-            ##print("Blink Count==",TOTAL)
-            
-            # draw the total number of blinks on the frame along with
-            # the computed eye aspect ratio for the frame
-            ###cv2.putText(test_img, "Blinks: {}".format(TOTAL), (10, 30),#
-            ###    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)#
-            ###cv2.putText(test_img, "EAR: {:.2f}".format(ear), (300, 30),#
-            ####    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)#
-        resized_img = cv2.resize(test_img, (1000, 700))
-        ###cv2.imshow('Facial emotion analysis ',resized_img)#
-
-
-        fps.update()
-        if cv2.waitKey(10) == ord('q'):
-            break
-
-    print("No of blinks =",TOTAL)        
-    blink_rate=(TOTAL/clip_duration)*60
-    if blink_rate<10.5:
-        blink_depression=((10.5-blink_rate)/10.5)*100
-    elif blink_rate>32:
-        blink_depression=((blink_rate-32)/32)*100
-    print("Blink Rate==",blink_rate)
-    print("Rate==",depression_rate)
-    print("Blink depression Rate==",blink_depression)
-    print("[INFO] elasped time:",clip_duration)
-    
-    fps.stop()
-    cv2.destroyAllWindows
-        
-    #data =  { 'key': key_id,
-    #          'Name': key_id,  
-    #          'Emotion': depression_rate,  
-    #          'Blink': blink_depression  
-     #       }  
-    doc = col_ref.document(key_id) # doc is DocumentReference
-    field_updates = {"dynamic_blink": blink_depression,
-                     "dynamic_emotion": depression_rate,
-                     "dynamic_comp": "YES"}
-    result=doc.update(field_updates)
-    #result=db.child("Mouth").push(data)
-    #result=db.child("Mouth").set(data)
-    print(result)
-    print("==========================================================") 
-    
-    #Resetting values for the next run
-    COUNTER = 0
-    TOTAL = 0
-    blink_rate=0
-    blink_depression=0 
-    s3.Object(BUCKET_NAME, key).delete()
+            #Resetting values for the next run
+            COUNTER = 0
+            TOTAL = 0
+            blink_rate=0
+            blink_depression=0 
+            s3.Object(BUCKET_NAME, key).delete()
+        else :
+            print("[INFO] This video is does not have a valid patiend ID") 
+            print("==========================================================") 
