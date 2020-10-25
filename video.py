@@ -29,8 +29,21 @@ import pyrebase
 from firebase import firebase
 import json
 import boto3
+import firebase_admin
+from firebase_admin import credentials, firestore
 
-
+databaseURL = {
+     'databaseURL': "https://dheergayuappclient.firebaseio.com"
+}
+cred = credentials.Certificate("creds.json")
+firebase_admin.initialize_app(cred, databaseURL)
+database_fs = firestore.client()
+col_ref = database_fs.collection('report')
+results = col_ref.doc('jdUoDi3eFe6qxwRtM86c').get() # one way to query
+#results = col_ref.order_by('date',direction='DESCENDING').limit(1).get() # another way - get the last document by date
+for item in results:
+    print(item.to_dict())
+    print(item.id)
 # Variables used to calculate depression rate
 depressed=0
 not_depressed=0
