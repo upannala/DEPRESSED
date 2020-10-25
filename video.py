@@ -265,13 +265,16 @@ for obj in bucket.objects.all():
     fps.stop()
     cv2.destroyAllWindows
         
-    data =  { 'key': key_id,
-              'Name': key_id,  
-              'Emotion': depression_rate,  
-              'Blink': blink_depression  
-            }  
-    
-    result=db.child("Mouth").push(data)
+    #data =  { 'key': key_id,
+    #          'Name': key_id,  
+    #          'Emotion': depression_rate,  
+    #          'Blink': blink_depression  
+     #       }  
+    doc = col_ref.document(key_id) # doc is DocumentReference
+    field_updates = {"dynamic_blink": blink_depression,
+                     "dynamic_emotion": depression_rate}
+    result=doc.update(field_updates)
+    #result=db.child("Mouth").push(data)
     #result=db.child("Mouth").set(data)
     print(result)
     print("==========================================================") 
