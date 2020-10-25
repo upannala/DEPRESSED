@@ -262,6 +262,9 @@ for obj in bucket.objects.all():
                 blink_depression=((10.5-blink_rate)/10.5)*100
             elif blink_rate>32:
                 blink_depression=((blink_rate-32)/32)*100
+            print("Total Frames==",counter_frames)
+            print("Depressed Frames==",depressed)
+            print("Non-Depressed Frames==",not_depressed)
             print("Blink Rate==",blink_rate)
             print("Rate==",depression_rate)
             print("Blink depression Rate==",blink_depression)
