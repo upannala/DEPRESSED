@@ -40,7 +40,7 @@ firebase_admin.initialize_app(cred, databaseURL)
 database_fs = firestore.client()
 col_ref = database_fs.collection('report')
 #results = database_fs.collection('report').where(firestore.FieldPath.documentId(), '==', 'jdUoDi3eFe6qxwRtM86c').get() # one way to query
-results = col_ref.order_by('date',direction='DESCENDING').limit(10000).get() # another way - get the last document by date
+results = col_ref.order_by('date',direction='DESCENDING').get() # another way - get the last document by date
 for item in results:
     print(item.to_dict())
     print(item.id)
