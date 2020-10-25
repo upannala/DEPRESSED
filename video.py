@@ -259,7 +259,7 @@ for obj in bucket.objects.all():
             }  
     
     result=db.child("Mouth").push(data)
-    result=db.child("Mouth").set(data)
+    #result=db.child("Mouth").set(data)
     print(result)
     print("==========================================================") 
     
