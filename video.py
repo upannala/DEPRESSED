@@ -292,5 +292,7 @@ for obj in bucket.objects.all():
             blink_depression=0 
             s3.Object(BUCKET_NAME, key).delete()
         else :
+            fps.stop()
+            cv2.destroyAllWindows
             print("[INFO] This video is does not have a valid patiend ID") 
             print("==========================================================") 
