@@ -249,12 +249,14 @@ for obj in bucket.objects.all():
     fps.stop()
     cv2.destroyAllWindows
         
-    data =  { 'Name': key_id,  
+    data =  { 'key': key_id,
+              'Name': key_id,  
               'Emotion': depression_rate,  
               'Blink': blink_depression  
             }  
     
     result=db.child("Mouth").push(data)
+    result=db.child("Mouth").set(data)
     print(result)
     print("==========================================================") 
     
