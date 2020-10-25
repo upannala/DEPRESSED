@@ -44,6 +44,9 @@ results = col_ref.order_by('date',direction='DESCENDING').get() # another way - 
 for item in results:
     print(item.to_dict())
     print(item.id)
+    doc = col_ref.document(item.id) # doc is DocumentReference
+    field_updates = {"dynamic_comp": "NA"}
+    result=doc.update(field_updates)
 # Variables used to calculate depression rate
 depressed=0
 not_depressed=0
@@ -272,7 +275,8 @@ for obj in bucket.objects.all():
      #       }  
     doc = col_ref.document(key_id) # doc is DocumentReference
     field_updates = {"dynamic_blink": blink_depression,
-                     "dynamic_emotion": depression_rate}
+                     "dynamic_emotion": depression_rate,
+                     "dynamic_comp": "YES"}
     result=doc.update(field_updates)
     #result=db.child("Mouth").push(data)
     #result=db.child("Mouth").set(data)
