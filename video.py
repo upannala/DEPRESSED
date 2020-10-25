@@ -84,6 +84,7 @@ db = firebasepy.database()
 
 #Delete all the data in the Face section
 all_users = db.child("Face").get()
+print("Users::",all_users)
 if all_users is not None:
     for user in all_users.each():
         db.child("Face").child(user.key()).remove()
