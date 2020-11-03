@@ -61,7 +61,7 @@ blink_rate=0
 blink_depression=0
 
 BUCKET_NAME = 'videosdhi'
-BUCKET_NAME_CONFIGS = 'videosdhi'
+BUCKET_NAME_CONFIGS = 'configsdhirghayu'
 
 config = {
   "apiKey": "AIzaSyD8k5I7iZcS-Pj9IsKNIUAZCuoXVMxFrO0",
