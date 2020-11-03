@@ -32,6 +32,18 @@ import boto3
 import firebase_admin
 from firebase_admin import credentials, firestore
 
+
+# Taking the video from S3 bucket
+s3 = boto3.resource('s3')
+
+#Downloading Libraries and Trained models from S3 bucket
+bucket_configs = s3.Bucket(BUCKET_NAME_CONFIGS)
+for obj in bucket_configs.objects.all():
+    key = obj.key
+    body = obj.get()['Body'].read()
+    s3.Bucket(BUCKET_NAME_CONFIGS).download_file(key, key)
+
+
 databaseURL = {
      'databaseURL': "https://dheergayuappclient.firebaseio.com"
 }
@@ -129,16 +141,6 @@ predictor = dlib.shape_predictor(args["shape_predictor"])
 (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
 (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
 
-
-# Taking the video from S3 bucket
-s3 = boto3.resource('s3')
-
-#Downloading Libraries and Trained models from S3 bucket
-bucket_configs = s3.Bucket(BUCKET_NAME_CONFIGS)
-for obj in bucket_configs.objects.all():
-    key = obj.key
-    body = obj.get()['Body'].read()
-    s3.Bucket(BUCKET_NAME_CONFIGS).download_file(key, key)
 
 #Downloading Videos and start processing
 bucket = s3.Bucket(BUCKET_NAME)
