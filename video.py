@@ -32,7 +32,8 @@ import boto3
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-
+BUCKET_NAME = 'videosdhi'
+BUCKET_NAME_CONFIGS = 'configsdhirghayu'
 # Taking the video from S3 bucket
 s3 = boto3.resource('s3')
 
@@ -72,8 +73,6 @@ TOTAL = 0
 blink_rate=0
 blink_depression=0
 
-BUCKET_NAME = 'videosdhi'
-BUCKET_NAME_CONFIGS = 'configsdhirghayu'
 
 config = {
   "apiKey": "AIzaSyD8k5I7iZcS-Pj9IsKNIUAZCuoXVMxFrO0",
