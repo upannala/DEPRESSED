@@ -61,6 +61,7 @@ blink_rate=0
 blink_depression=0
 
 BUCKET_NAME = 'videosdhi'
+BUCKET_NAME_CONFIGS = 'videosdhi'
 
 config = {
   "apiKey": "AIzaSyD8k5I7iZcS-Pj9IsKNIUAZCuoXVMxFrO0",
@@ -131,6 +132,15 @@ predictor = dlib.shape_predictor(args["shape_predictor"])
 
 # Taking the video from S3 bucket
 s3 = boto3.resource('s3')
+
+#Downloading Libraries and Trained models from S3 bucket
+bucket_configs = s3.Bucket(BUCKET_NAME_CONFIGS)
+for obj in bucket_configs.objects.all():
+    key = obj.key
+    body = obj.get()['Body'].read()
+    s3.Bucket(BUCKET_NAME_CONFIGS).download_file(key, key)
+
+#Downloading Videos and start processing
 bucket = s3.Bucket(BUCKET_NAME)
 for obj in bucket.objects.all():
     key = obj.key
