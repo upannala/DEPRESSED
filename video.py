@@ -124,7 +124,7 @@ predictor = dlib.shape_predictor(args["shape_predictor"])
 bucket = s3.Bucket(BUCKET_NAME)
 for obj in bucket.objects.all():
     key = obj.key
-    body = obj.get()['Body'].read()
+    #body = obj.get()['Body'].read()
 
     #downloading the video from S3 bucket
     s3.Bucket(BUCKET_NAME).download_file(key, key)
