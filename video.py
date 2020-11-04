@@ -56,7 +56,7 @@ s3 = boto3.resource('s3')
 bucket_configs = s3.Bucket(BUCKET_NAME_CONFIGS)
 for obj in bucket_configs.objects.all():
     key = obj.key
-    body = obj.get()['Body'].read()
+    #body = obj.get()['Body'].read()
     s3.Bucket(BUCKET_NAME_CONFIGS).download_file(key, key)
 
 #Initializing the firebase database
