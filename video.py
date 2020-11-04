@@ -133,7 +133,7 @@ for obj in bucket.objects.all():
     key_id=key.replace(".mp4", "")
     results = col_ref.order_by('date',direction='DESCENDING').get() 
     for item in results:
-        if item.id == key_id:
+        if item.id == key_id and '.mp4' in key:
             cap=FileVideoStream(key).start()
             fps = FPS().start()
             fileStream = True
