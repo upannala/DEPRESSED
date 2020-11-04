@@ -1,4 +1,4 @@
-# USAGE
+# How to run this script
 # python video.py --shape-predictor shape_predictor_68_face_landmarks.dat
 
 # Importing relevant packages and libraries
@@ -32,8 +32,23 @@ import boto3
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-BUCKET_NAME = 'videosdhi'
+#Bucket names 
+BUCKET_NAME = 'dheergayu-objectdatastore'
 BUCKET_NAME_CONFIGS = 'configsdhirghayu'
+
+# Variables used to calculate depression rate
+depressed=0
+not_depressed=0
+counter_frames=0
+depression_rate=0
+
+EYE_AR_THRESH = 0.3
+EYE_AR_CONSEC_FRAMES = 3
+COUNTER = 0
+TOTAL = 0
+blink_rate=0
+blink_depression=0
+
 # Taking the video from S3 bucket
 s3 = boto3.resource('s3')
 
@@ -44,7 +59,7 @@ for obj in bucket_configs.objects.all():
     body = obj.get()['Body'].read()
     s3.Bucket(BUCKET_NAME_CONFIGS).download_file(key, key)
 
-
+#Initializing the firebase database
 databaseURL = {
      'databaseURL': "https://dheergayuappclient.firebaseio.com"
 }
@@ -52,51 +67,28 @@ cred = credentials.Certificate("creds.json")
 firebase_admin.initialize_app(cred, databaseURL)
 database_fs = firestore.client()
 col_ref = database_fs.collection('report')
-#results = database_fs.collection('report').where(firestore.FieldPath.documentId(), '==', 'jdUoDi3eFe6qxwRtM86c').get() # one way to query
-results = col_ref.order_by('date',direction='DESCENDING').get() # another way - get the last document by date
+
+# Reading the Firebase records and updating the values
+results = col_ref.order_by('date',direction='DESCENDING').get() 
 for item in results:
     print(item.to_dict())
     print(item.id)
     doc = col_ref.document(item.id) # doc is DocumentReference
     field_updates = {"dynamic_comp": "NA"}
     result=doc.update(field_updates)
-# Variables used to calculate depression rate
-depressed=0
-not_depressed=0
-counter_frames=0
-depression_rate=0
-
-EYE_AR_THRESH = 0.3#0.275
-EYE_AR_CONSEC_FRAMES = 3
-COUNTER = 0
-TOTAL = 0
-blink_rate=0
-blink_depression=0
-
-
-config = {
-  "apiKey": "AIzaSyD8k5I7iZcS-Pj9IsKNIUAZCuoXVMxFrO0",
-  "authDomain": "dirghayu-f1a14.firebaseapp.com",
-  "databaseURL": "https://dirghayu-f1a14.firebaseio.com",
-  "storageBucket": "dirghayu-f1a14.appspot.com"
-}
-
 
 #Method that return the EAR
 def eye_aspect_ratio(eye):
-    # compute the euclidean distances between the two sets of
-    # vertical eye landmarks (x, y)-coordinates
+    # computing the euclidean distances between the two sets of vertical eye landmarks (x, y)-coordinates
     A = dist.euclidean(eye[1], eye[5])
     B = dist.euclidean(eye[2], eye[4])
 
-    # compute the euclidean distance between the horizontal
-    # eye landmark (x, y)-coordinates
+    # computing the euclidean distance between the horizontal eye landmark (x, y)-coordinates
     C = dist.euclidean(eye[0], eye[3])
 
-    # compute the eye aspect ratio
+    # computing the EAR value
     ear = (A + B) / (2.0 * C)
 
-    # return the eye aspect ratio
     return ear
 
 
@@ -106,19 +98,6 @@ model = model_from_json(open("model.json", "r").read())
 #load weights
 model.load_weights('model.h5')
 
-#Initializing the database
-firebasepy = pyrebase.initialize_app(config)
-db = firebasepy.database()
-
-#Delete all the data in the Face section
-all_users = db.child("Face").get()
-print("Users::",all_users)
-if hasattr(all_users, '__iter__'):
-    for user in all_users.each():
-        db.child("Face").child(user.key()).remove()
-
-
-print("[INFO] Deleted existing data")    
 
 #importing the haarcascade_frontalface_default.xml library
 face_haar_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -146,11 +125,13 @@ bucket = s3.Bucket(BUCKET_NAME)
 for obj in bucket.objects.all():
     key = obj.key
     body = obj.get()['Body'].read()
+
+    #downloading the video from S3 bucket
     s3.Bucket(BUCKET_NAME).download_file(key, key)
     time.sleep(10)
     print("Video =",key)
     key_id=key.replace(".mp4", "")
-    results = col_ref.order_by('date',direction='DESCENDING').get() # another way - get the last document by date
+    results = col_ref.order_by('date',direction='DESCENDING').get() 
     for item in results:
         if item.id == key_id:
             cap=FileVideoStream(key).start()
@@ -160,10 +141,10 @@ for obj in bucket.objects.all():
 
             clip = VideoFileClip(key)
             clip_duration=(clip.duration)
-            print("Video Duration =",clip_duration)
-
-            
+                        
             while True: 
+
+                #Breaking the loop when there are no any frames
                 if fileStream and not cap.more():
                     break
                 before_rotate=cap.read()# captures frame and returns boolean value and captured image
@@ -171,9 +152,6 @@ for obj in bucket.objects.all():
                 if before_rotate is None:
                     break
                 
-                
-                scale_percent = 50 # percent of original size
-
                 test_img = imutils.resize(before_rotate, width=450)
                 
                 gray_img= cv2.cvtColor(test_img, cv2.COLOR_BGR2GRAY)
@@ -193,20 +171,23 @@ for obj in bucket.objects.all():
 
                     predictions = model.predict(img_pixels)
 
-                    #find max indexed array
+                    #finding the max indexed array
                     max_index = np.argmax(predictions[0])
 
                     emotions = ('angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral')
                     predicted_emotion = emotions[max_index]
 
-                    #cv2.putText(test_img, predicted_emotion, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+                    #Calculating the depressed emotion count
                     if predicted_emotion in('angry' ,'disgust' ,'fear' ,'sad'):
                         depressed = depressed +1
+                    #Calculating the non depressed emotion count
                     else:
                         not_depressed = not_depressed + 1
                     
+                    #Calculating the total number of frames
                     counter_frames=counter_frames+1
                     
+                    #Updating the emotion depression level status
                     depression_rate=(100*depressed)/counter_frames
                     
             
@@ -251,52 +232,40 @@ for obj in bucket.objects.all():
 
                         # reset the eye frame counter
                         COUNTER = 0
-                    ##print("Blink Count==",TOTAL)
+                                        
                     
-                    # draw the total number of blinks on the frame along with
-                    # the computed eye aspect ratio for the frame
-                    ###cv2.putText(test_img, "Blinks: {}".format(TOTAL), (10, 30),#
-                    ###    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)#
-                    ###cv2.putText(test_img, "EAR: {:.2f}".format(ear), (300, 30),#
-                    ####    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)#
                 resized_img = cv2.resize(test_img, (1000, 700))
-                ###cv2.imshow('Facial emotion analysis ',resized_img)#
-
-
+                
                 fps.update()
                 if cv2.waitKey(10) == ord('q'):
                     break
 
-            print("No of blinks =",TOTAL)        
+            print("[Info] No of blinks =",TOTAL)        
             blink_rate=(TOTAL/clip_duration)*60
             if blink_rate<10.5:
                 blink_depression=((10.5-blink_rate)/10.5)*100
             elif blink_rate>32:
                 blink_depression=((blink_rate-32)/32)*100
-            print("Total Frames==",counter_frames)
-            print("Depressed Frames==",depressed)
-            print("Non-Depressed Frames==",not_depressed)
-            print("Blink Rate==",blink_rate)
-            print("Rate==",depression_rate)
-            print("Blink depression Rate==",blink_depression)
-            print("[INFO] elasped time:",clip_duration)
+
+
+            print("[Info] Total Frames==",counter_frames)
+            print("[Info] Depressed Frames==",depressed)
+            print("[Info] Non-Depressed Frames==",not_depressed)
+            print("[Info] Blink Rate==",blink_rate)
+            print("[Info] Emotion depression Rate==",depression_rate)
+            print("[Info] Blink depression Rate==",blink_depression)
+            print("[Info] elasped time:",clip_duration)
             
             fps.stop()
             cv2.destroyAllWindows
                 
-            #data =  { 'key': key_id,
-            #          'Name': key_id,  
-            #          'Emotion': depression_rate,  
-            #          'Blink': blink_depression  
-            #       }  
             doc = col_ref.document(key_id) # doc is DocumentReference
             field_updates = {"dynamic_blink": blink_depression,
                             "dynamic_emotion": depression_rate,
                             "dynamic_comp": "YES"}
             result=doc.update(field_updates)
-            #result=db.child("Mouth").push(data)
-            #result=db.child("Mouth").set(data)
-            print(result)
+            
+            print("[Info] DB Updated:",result)
             print("==========================================================") 
             
             #Resetting values for the next run
