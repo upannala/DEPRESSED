@@ -280,4 +280,4 @@ for obj in bucket.objects.all():
         
         else :
             print("==========================================================") 
-            s3.Object(BUCKET_NAME, key).delete()
+            #s3.Object(BUCKET_NAME, key).delete()
