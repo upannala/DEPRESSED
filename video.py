@@ -108,15 +108,15 @@ ap.add_argument("-p", "--shape-predictor", required=True,
     help="path to facial landmark predictor")
 args = vars(ap.parse_args())
 
-# initialize dlib's face detector (HOG-based) and then create
-# the facial landmark predictor
-print("[INFO] loading facial landmark predictor...")
+# initialize dlib face detector 
+# Creating the facial landmark predictor
+print("[INFO] loading facial landmark predictor")
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(args["shape_predictor"])
 
-# grab the indexes of the facial landmarks for the left and
-# right eye, respectively
+# Facial landmark indexes for the left eye
 (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
+# Facial landmark indexes for the right eye
 (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
 
 
@@ -124,9 +124,7 @@ predictor = dlib.shape_predictor(args["shape_predictor"])
 bucket = s3.Bucket(BUCKET_NAME)
 for obj in bucket.objects.all():
     key = obj.key
-    #body = obj.get()['Body'].read()
-    #obj.Acl().put(ACL='public-read')
-
+    
     #downloading the video from S3 bucket
     s3.Bucket(BUCKET_NAME).download_file(key, key)
     time.sleep(10)
@@ -135,30 +133,36 @@ for obj in bucket.objects.all():
     results = col_ref.order_by('date',direction='DESCENDING').get() 
     for item in results:
         if item.id == key_id and '.mp4' in key:
+            # Starting the Video stream 
             cap=FileVideoStream(key).start()
             fps = FPS().start()
             fileStream = True
             time.sleep(1.0)
 
+            #Identifying the video clip duration
             clip = VideoFileClip(key)
             clip_duration=(clip.duration)
-                        
+
+            #Loop over frames of the Video provided            
             while True: 
 
                 #Breaking the loop when there are no any frames
                 if fileStream and not cap.more():
                     break
-                before_rotate=cap.read()# captures frame and returns boolean value and captured image
+                before_rotate=cap.read()
                 
                 if before_rotate is None:
                     break
                 
+                #Resizing the image
                 test_img = imutils.resize(before_rotate, width=450)
                 
+                #Converting it to grayscale
                 gray_img= cv2.cvtColor(test_img, cv2.COLOR_BGR2GRAY)
 
                 faces_detected = face_haar_cascade.detectMultiScale(gray_img, 1.32, 5)
                 
+                #Detect the faces that are in the grayscale image
                 rects = detector(gray_img, 0)
                 
 
@@ -172,7 +176,7 @@ for obj in bucket.objects.all():
 
                     predictions = model.predict(img_pixels)
 
-                    #finding the max indexed array
+                    #Indentifiyng the max indexed 
                     max_index = np.argmax(predictions[0])
 
                     emotions = ('angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral')
@@ -192,46 +196,41 @@ for obj in bucket.objects.all():
                     depression_rate=(100*depressed)/counter_frames
                     
             
-                    
+                #Looping the face detections    
                 for rect in rects:
                     
-                    # determine the facial landmarks for the face region, then
-                    # convert the facial landmark (x, y)-coordinates to a NumPy
-                    # array
                     shape = predictor(gray_img, rect)
                     shape = face_utils.shape_to_np(shape)
 
-                    # extract the left and right eye coordinates, then use the
-                    # coordinates to compute the eye aspect ratio for both eyes
+                    # coordinates of left eye
                     leftEye = shape[lStart:lEnd]
+                    # coordinates of right eye
                     rightEye = shape[rStart:rEnd]
+                    # EAR of left eye
                     leftEAR = eye_aspect_ratio(leftEye)
+                    # EAR of Right eye
                     rightEAR = eye_aspect_ratio(rightEye)
 
-                    # average the eye aspect ratio together for both eyes
+                    # average EAR value
                     ear = (leftEAR + rightEAR) / 2.0
 
-                    # compute the convex hull for the left and right eye, then
-                    # visualize each of the eyes
+                    # Convex hull for the left eye
                     leftEyeHull = cv2.convexHull(leftEye)
-                    rightEyeHull = cv2.convexHull(rightEye)
-                    ##cv2.drawContours(test_img, [leftEyeHull], -1, (0, 255, 0), 1)
-                    ##cv2.drawContours(test_img, [rightEyeHull], -1, (0, 255, 0), 1)
-
-                    # check to see if the eye aspect ratio is below the blink
-                    # threshold, and if so, increment the blink frame counter
+                    # Convex hull for the right eye
+                    rightEyeHull = cv2.convexHull(rightEye)                   
+                   
+                    # Increment the counter if the EAR value is below the eye
+                    # Threshhold value
                     if ear < EYE_AR_THRESH:
                         COUNTER += 1
 
-                    # otherwise, the eye aspect ratio is not below the blink
-                    # threshold
                     else:
-                        # if the eyes were closed for a sufficient number of
-                        # then increment the total number of blinks
+                        # If the eye is closed for the required frames count
+                        # increment the number of blinks
                         if COUNTER >= EYE_AR_CONSEC_FRAMES:
                             TOTAL += 1
 
-                        # reset the eye frame counter
+                        # reseting the counter
                         COUNTER = 0
                                         
                     
@@ -241,14 +240,15 @@ for obj in bucket.objects.all():
                 if cv2.waitKey(10) == ord('q'):
                     break
 
-            print("[Info] No of blinks =",TOTAL)        
+            print("[Info] No of blinks =",TOTAL) 
+            #Calculating the blink depression rate       
             blink_rate=(TOTAL/clip_duration)*60
             if blink_rate<10.5:
                 blink_depression=((10.5-blink_rate)/10.5)*100
             elif blink_rate>32:
                 blink_depression=((blink_rate-32)/32)*100
 
-
+            #Printing the information
             print("[Info] Total Frames==",counter_frames)
             print("[Info] Depressed Frames==",depressed)
             print("[Info] Non-Depressed Frames==",not_depressed)
@@ -260,7 +260,8 @@ for obj in bucket.objects.all():
             fps.stop()
             cv2.destroyAllWindows
                 
-            doc = col_ref.document(key_id) # doc is DocumentReference
+            #Updating the database
+            doc = col_ref.document(key_id) 
             field_updates = {"dynamic_blink": blink_depression,
                             "dynamic_emotion": depression_rate,
                             "dynamic_comp": "YES"}
@@ -281,4 +282,4 @@ for obj in bucket.objects.all():
         
         else :
             print("==========================================================") 
-            #s3.Object(BUCKET_NAME, key).delete()
+            
